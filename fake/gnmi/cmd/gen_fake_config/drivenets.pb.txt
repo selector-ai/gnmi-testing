@@ -1,0 +1,63 @@
+target: "drivenets"
+seed: 12345
+values: <
+  path: "drivenets-top"
+  path: "system"
+  path: "ncps"
+  path: "ncp[ncp-id=1]"
+  path: "config-items"
+  path: "platform"
+  path: "oper-items"
+  path: "disk-usage[file-system-name='/dev/sda9']"
+  path: "disk-usage-percentage"
+  repeat: 1
+  int_value: <
+    value: 5
+  >
+>
+values: <
+  path: "drivenets-top"
+  path: "system"
+  path: "ncps"
+  path: "ncp[ncp-id=1]"
+  path: "config-items"
+  path: "platform"
+  path: "oper-items"
+  path: "disk-usage[file-system-name='/dev/sda9']"
+  path: "disk-available"
+  repeat: 1
+  int_value: <
+    value: 10704011264
+  >
+>
+values: <
+  path: "drivenets-top"
+  path: "system"
+  path: "ncps"
+  path: "ncp[ncp-id=1]"
+  path: "config-items"
+  path: "platform"
+  path: "oper-items"
+  path: "disk-usage[file-system-name='/dev/sda9']"
+  path: "mount-path"
+  repeat: 1
+  string_value: <
+    value: "core"
+  >
+>
+values: <
+  path: "drivenets-top"
+  path: "system"
+  path: "ncps"
+  path: "ncp[ncp-id=1]"
+  path: "config-items"
+  path: "platform"
+  path: "oper-items"
+  path: "disk-usage[file-system-name='/dev/sda11']"
+  path: "disk-usage-percentage"
+  repeat: 1
+  int_value: <
+    value: 15
+  >
+>
+client_type: GRPC_GNMI
