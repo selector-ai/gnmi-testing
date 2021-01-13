@@ -1,1 +1,1 @@
-./server --config ../gen_fake_config/drivenets.pb.txt --text --port 50051 --server_crt ./server.crt --server_key ./server.key --allow_no_client_auth --logtostderr
+./server --config ../gen_fake_config/drivenets.pb.txt --text --port 50051 --server_crt ../certs/server-cert.pem --server_key ../certs/server-key.pem  --ca_crt ../certs/client-cert.pem  --logtostderr

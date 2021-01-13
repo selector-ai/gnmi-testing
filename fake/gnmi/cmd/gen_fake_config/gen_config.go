@@ -66,6 +66,10 @@ var (
 		DisableEof:  false,
 		EnableDelay: false,
 		ClientType:  fpb.Config_GRPC_GNMI,
+		Credentials: &fpb.Credentials{
+			Username: "grpc",
+			Password: "s2",
+		},
 	}
 )
 

@@ -61,3 +61,7 @@ values: <
   >
 >
 client_type: GRPC_GNMI
+credentials: <
+  username: "grpc"
+  password: "s2"
+>
