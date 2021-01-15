@@ -25,12 +25,12 @@ import (
 	"io/ioutil"
 
 	"flag"
-	
+
 	log "github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc"
 	"github.com/openconfig/gnmi/testing/fake/gnmi"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	fpb "github.com/openconfig/gnmi/testing/fake/proto"
 )
@@ -44,6 +44,7 @@ var (
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, fake_server will request but not require a client certificate.")
+	serverSideTLS     = flag.Bool("server_side_tls", false, "When set, client can connect to server using client certificate")
 )
 
 func loadConfig(fileName string) (*fpb.Config, error) {
@@ -93,6 +94,9 @@ func main() {
 		// require it to proceed. If certificate is provided, it will be
 		// verified.
 		tlsCfg.ClientAuth = tls.RequestClientCert
+	}
+	if *serverSideTLS {
+		tlsCfg.ClientAuth = tls.NoClientCert
 	}
 
 	if *caCert != "" {
