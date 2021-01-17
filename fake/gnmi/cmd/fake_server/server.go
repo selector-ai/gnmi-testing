@@ -23,16 +23,26 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"flag"
 
 	log "github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
-	"github.com/openconfig/gnmi/testing/fake/gnmi"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 
 	fpb "github.com/openconfig/gnmi/testing/fake/proto"
+	"github.com/selector-ai/gnmi-testing/fake/gnmi"
+)
+
+// private type for Context keys
+type contextKey int
+
+const (
+	clientIDKey contextKey = iota
 )
 
 var (
@@ -45,7 +55,56 @@ var (
 	serverKey         = flag.String("server_key", "", "TLS server private key")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, fake_server will request but not require a client certificate.")
 	serverSideTLS     = flag.Bool("server_side_tls", false, "When set, client can connect to server using client certificate")
+	enableLogin       = flag.Bool("enable_login", false, "When set, user and password credentials is required for authentication")
+	userName          = flag.String("username", "", "User Name")
+	password          = flag.String("password", "", "Password")
 )
+
+// authenticateAgent check the client credentials
+func authenticateClient(ctx context.Context) (string, error) {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		clientLogin := strings.Join(md["username"], "")
+		clientPassword := strings.Join(md["password"], "")
+
+		if clientLogin != *userName {
+			return "", fmt.Errorf("unknown user %s", clientLogin)
+		}
+		if clientPassword != *password {
+			return "", fmt.Errorf("bad password %s", clientPassword)
+		}
+
+		log.Infof("authenticated client: %s", clientLogin)
+
+		return "42", nil
+	}
+	return "", fmt.Errorf("missing credentials")
+}
+
+// unaryInterceptor call authenticateClient with current context
+func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	clientID, err := authenticateClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = context.WithValue(ctx, clientIDKey, clientID)
+
+	return handler(ctx, req)
+}
+
+// streamInterceptor call authenticateClient with current context
+func streamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	_, err := authenticateClient(ss.Context())
+	if err != nil {
+		return err
+	}
+
+	err = handler(srv, ss)
+	if err != nil {
+		fmt.Errorf("RPC failed with error %v", err)
+	}
+	return err
+}
 
 func loadConfig(fileName string) (*fpb.Config, error) {
 	in, err := ioutil.ReadFile(fileName)
@@ -112,6 +171,11 @@ func main() {
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
+	if *enableLogin {
+		opts = append(opts, grpc.UnaryInterceptor(unaryInterceptor))
+		opts = append(opts, grpc.StreamInterceptor(streamInterceptor))
+	}
+
 	cfg.Port = int32(*port)
 	a, err := gnmi.New(cfg, opts)
 	if err != nil {
